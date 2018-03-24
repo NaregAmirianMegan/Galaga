@@ -13,7 +13,7 @@ from pygame.locals import *
 from random import randint
 from timeit import default_timer
 
-print("program started")
+print("Game loading...")
 
 #set window position
 x = 500
@@ -123,7 +123,7 @@ class Enemy1():
     def checkStatus(self, laser):
         if(laser.xPos >= self.xPos and laser.xPos <= (self.xPos+60) and laser.yPos <= (self.yPos+30)):
             self.destroyed = True
-        if(self.yPos >= background.height+60):
+        elif(self.yPos >= background.height+60):
             self.safe = True
 
     def update(self):
@@ -142,12 +142,17 @@ class Enemy2():
         self.yPos = -30
         self.destroyed = False
         self.health = 2
+        self.safe = False
 
     def checkStatus(self, laser):
+        print("Called")
         if(laser.xPos >= self.xPos and laser.xPos <= (self.xPos+60) and laser.yPos == (self.yPos+30)):
+            print(self.health)
             self.health = self.health - 1
-            if(self.health == 0):
+            if(self.health <= 0):
                 self.destroyed = True
+        elif(self.yPos >= background.height+60):
+            self.safe = True
 
     def update(self):
         if not(self.destroyed):
@@ -157,14 +162,19 @@ class Enemy2():
         self.display.blit(self.enemyIm, (self.xPos, self.yPos))
 
 
-class wave1():
-    def __init__(self):
+class wave():
+    def __init__(self, enemyType):
         self.enemies = []
         self.creationCount = 0
+        self.enemyType = enemyType
 
     def addEnemy(self, time):
-        if(time%4 == 0 and time >= 4):
-            self.enemies.append(Enemy1('images\enemy1.png',background.display))
+        if(self.enemyType == 1):
+            if(time%4 == 0 and time >= 4):
+                self.enemies.append(Enemy1('images\enemy1.png',background.display))
+        else:
+            if(time%2 == 0 and time >= 4):
+                self.enemies.append(Enemy2('images\enemy1.png',background.display))
 
     def update(self, laser):
         if(len(self.enemies) > 0):
@@ -190,7 +200,7 @@ laserArray = []
 
 prevTime = 0
 
-wave1 = wave1()
+currentWave = wave(1)
 
 #clock setup
 clock = pygame.time.Clock()
@@ -231,15 +241,19 @@ while not crashed:
         lasr.render()
 
     if(currentTime < 30 and currentTime != prevTime):
-        wave1.addEnemy(currentTime)
-    if(currentTime < 30):
-        wave1.update(laserArray)
+        currentWave.addEnemy(currentTime)
+    elif(currentTime == 31 and currentTime != prevTime):
+        currentWave = wave(2)
+        currentWave.addEnemy(currentTime)
+    if(currentTime < 90 and currentTime != prevTime):
+        currentWave.addEnemy(currentTime)
+    currentWave.update(laserArray)
 
     #check if enemy has made it passed player
-    for enemy in wave1.enemies:
-        print("enemy")
+    for enemy in currentWave.enemies:
+        #print("enemy")
         if(enemy.safe == True):
-            print("enemy is safe!")
+            #print("enemy is safe!")
             gameOver = True
             break
         if(enemy.destroyed == True):
